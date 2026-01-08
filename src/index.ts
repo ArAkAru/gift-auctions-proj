@@ -1,6 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { connectDatabase, disconnectDatabase } from './config/database';
+import auctionsRouter from './routes/auctions';
+import biddersRouter from './routes/bidders';
 
 dotenv.config();
 
@@ -12,6 +14,9 @@ app.use(express.json());
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Gift Auctions API is running' });
 });
+
+app.use('/auctions', auctionsRouter);
+app.use('/bidders', biddersRouter);
 
 const startServer = async () => {
   try {
