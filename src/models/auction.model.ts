@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export enum AuctionStatus {
+    DRAFT = 'DRAFT',
+    ACTIVE = 'ACTIVE',
+    COMPLETED = 'COMPLETED',
+    CANCELLED = 'CANCELLED'
+}
+
 export interface IAuction extends Document {
   name: string;
   description?: string;
@@ -7,6 +14,7 @@ export interface IAuction extends Document {
   roundDuration: number;
   minBid: number;
   minBidIncrement: number;
+  status: AuctionStatus;
 }
 
 const AuctionSchema = new Schema<IAuction>(
@@ -17,6 +25,7 @@ const AuctionSchema = new Schema<IAuction>(
     roundDuration: { type: Number, required: true },
     minBid: { type: Number, default: 1 },
     minBidIncrement: { type: Number, default: 1 },
+    status: { type: String, enum: AuctionStatus, default: AuctionStatus.DRAFT },
   }
 );
 
