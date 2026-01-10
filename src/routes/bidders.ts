@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { bidderService } from '../services/bidder.service';
+import { bidService } from '../services/bid.service';
 
 const router = Router();
 

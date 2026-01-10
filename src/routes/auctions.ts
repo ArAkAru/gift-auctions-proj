@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { auctionService } from '../services/auction.service';
+import { bidService } from '../services/bid.service';
 
 const router = Router();
 
@@ -47,4 +48,23 @@ router.post('/:id/cancel', (req: Request, res: Response) => {
   res.json({ message: 'Cancel an auction' });
 });
 
+// Create a new bid
+router.post('/:id/bids', async (req: Request, res: Response) => {
+  try {
+    const bid = await bidService.create(req.body);
+    res.status(201).json(bid);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to place bid' });
+  }
+});
+
+// Get all bids for an auction
+router.get('/:id/bids', async (req: Request, res: Response) => {
+  try {
+    const bids = await bidService.getBidByAuctionId(req.params.id);
+    res.json(bids);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get bids' });
+  }
+});
 export default router;
