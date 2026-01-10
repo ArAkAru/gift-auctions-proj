@@ -1,10 +1,10 @@
-enum BidStatus {
+export enum BidStatus {
     ACTIVE = 'ACTIVE',
     WON = 'WON',
     LOST = 'LOST',
 }
 
-interface Bid {
+export interface Bid {
     auctionId: string;
     bidderId: string;
     amount: number;

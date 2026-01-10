@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { BidStatus } from '../entities/bid';
 
 export interface IBid extends Document {
     auctionId: string;
