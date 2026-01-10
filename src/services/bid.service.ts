@@ -2,6 +2,7 @@ import { Bid, IBid } from '../models/bid.model';
 import { Bid as BidEntity } from '../entities/bid';
 import { Auction } from '../models/auction.model';
 import { BidStatus } from '../entities/bid';
+import { AuctionStatus } from '../models/auction.model';
 
 export class BidService {
   async create(bidEntity: BidEntity): Promise<IBid> {
@@ -9,6 +10,9 @@ export class BidService {
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       throw new Error('Auction not found');
+    }
+    if (auction.status !== AuctionStatus.ACTIVE) {
+      throw new Error('Auction is not in active status');
     }
     if (amount < auction.minBid) {
       throw new Error('Bid amount is less than the minimum bid');

@@ -39,8 +39,13 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Start an auction
-router.post('/:id/start', (req: Request, res: Response) => {
-  res.json({ message: 'Start an auction' });
+router.post('/:id/start', async (req: Request, res: Response) => {
+  try {
+    const auction = await auctionService.start(req.params.id);
+    res.status(200).json(auction);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to start auction' });
+  }
 });
 
 // Cancel an auction
