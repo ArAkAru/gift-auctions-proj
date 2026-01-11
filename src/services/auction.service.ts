@@ -32,4 +32,20 @@ export class AuctionService {
   }
 }
 
+async function endRound(auctionId: string): Promise<IAuction | null> {
+  const now = new Date();
+  const auction = await Auction.findById(auctionId);
+  if (!auction) {
+    throw new Error('Auction not found');
+  }
+  const roundDuration = auction.roundDuration;
+  const roundEndTime = new Date(now.getTime() + roundDuration * 1000);
+  if (now > roundEndTime) {
+    throw new Error('Round has not ended');
+  }
+  
+  auction.status = AuctionStatus.COMPLETED;
+  await auction.save();
+  return auction;
+}
 export const auctionService = new AuctionService();
