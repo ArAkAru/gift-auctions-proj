@@ -15,6 +15,7 @@ export interface IAuction extends Document {
   minBid: number;
   minBidIncrement: number;
   status: AuctionStatus;
+  roundEndTime?: Date;
 }
 
 const AuctionSchema = new Schema<IAuction>(
@@ -26,6 +27,7 @@ const AuctionSchema = new Schema<IAuction>(
     minBid: { type: Number, default: 1 },
     minBidIncrement: { type: Number, default: 1 },
     status: { type: String, enum: AuctionStatus, default: AuctionStatus.DRAFT },
+    roundEndTime: { type: Date },
   }
 );
 

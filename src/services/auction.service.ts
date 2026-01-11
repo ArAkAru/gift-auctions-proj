@@ -4,7 +4,10 @@ import { AuctionStatus } from '../models/auction.model';
 
 export class AuctionService {
   async create(params: CreateAuctionParams): Promise<IAuction> {
-    const auction = await Auction.create(params);
+    const roundDuration = params.roundDuration;
+    const roundEndTime = new Date(Date.now() + roundDuration * 1000);
+    const auctionParams = { ...params, roundEndTime };
+    const auction = await Auction.create(auctionParams);
     return auction;
   }
 
