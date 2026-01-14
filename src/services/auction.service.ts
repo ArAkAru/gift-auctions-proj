@@ -65,7 +65,7 @@ export class AuctionService {
       status: BidStatus.ACTIVE
     })
       .sort({ amount: -1, createdAt: 1 })
-      .limit(10); // TODO: forget about set how many items per round, just take top 10 bids for now
+      .limit(auction.itemsPerRound);
 
     for (const bid of topBids) {
       await bidderService.charge(
@@ -75,7 +75,6 @@ export class AuctionService {
         bid.id
       );
       winners.push(bid.bidderId);
-      // TODO: charge logic here
     }
 
     // Check if we should continue to next round

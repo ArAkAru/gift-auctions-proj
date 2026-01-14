@@ -1,8 +1,16 @@
 import { Bidder, IBidder } from '../models/bidder.model';
 
 export class BidderService {
-  async create(params: { username: string; balance?: number }): Promise<IBidder> {
-    const bidder = await Bidder.create(params);
+  async create(params: { username: string; balance: number }): Promise<IBidder> {
+    const bidder = new Bidder({
+      username: params.username,
+      balance: {
+        available: params.balance,
+        held: 0
+      }
+    });
+    await bidder.save();
+  
     return bidder;
   }
 

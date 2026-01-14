@@ -7,7 +7,10 @@ const router = Router();
 // Create a new bidder
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const bidder = await bidderService.create(req.body);
+    const bidder = await bidderService.create({
+      username: req.body.username,
+      balance: req.body.balance || 0
+    });
     res.status(201).json(bidder);
   } catch (error) {
     res.status(400).json({ error: 'Failed to create bidder' });
