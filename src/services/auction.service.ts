@@ -3,6 +3,7 @@ import { CreateAuctionParams } from '../entities';
 import { AuctionStatus } from '../models/auction.model';
 import { Bid } from '../models/bid.model';
 import { BidStatus } from '../entities/bid';
+import { bidderService } from './bidder.service';
 
 export class AuctionService {
   async create(params: CreateAuctionParams): Promise<IAuction> {
@@ -67,6 +68,12 @@ export class AuctionService {
       .limit(10); // TODO: forget about set how many items per round, just take top 10 bids for now
 
     for (const bid of topBids) {
+      await bidderService.charge(
+        bid.bidderId, 
+        bid.amount, 
+        auction.id, 
+        bid.id
+      );
       winners.push(bid.bidderId);
       // TODO: charge logic here
     }
@@ -90,7 +97,12 @@ export class AuctionService {
       });
 
       for (const bid of remainingBids) {
-        // TODO: refund logic here
+        await bidderService.refund(
+          bid.bidderId, 
+          bid.amount, 
+          auction.id, 
+          bid.id
+        );
       }
     }
     return winners;
