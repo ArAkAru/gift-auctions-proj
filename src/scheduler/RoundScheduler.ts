@@ -31,8 +31,7 @@ export class RoundScheduler {
 
   private async tick(): Promise<void> {
     try {
-      // в endRound надо достать просроченные раунды, ориентируясь на now а не по id
-      //await auctionService.endRound(auctionId);
+      await auctionService.processEndingRounds();
     } catch (error) {
       console.error('Scheduler tick error:', error);
     }
