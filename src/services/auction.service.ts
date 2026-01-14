@@ -6,10 +6,7 @@ import { BidStatus } from '../entities/bid';
 
 export class AuctionService {
   async create(params: CreateAuctionParams): Promise<IAuction> {
-    const roundDuration = params.roundDuration;
-    const roundEndTime = new Date(Date.now() + roundDuration * 1000);
-    const auctionParams = { ...params, roundEndTime };
-    const auction = await Auction.create(auctionParams);
+    const auction = await Auction.create(params);
     return auction;
   }
 
@@ -30,8 +27,12 @@ export class AuctionService {
     if (auction.status !== AuctionStatus.DRAFT) {
       throw new Error('Auction is not in draft status');
     }
-
+    const now = new Date();
+    const roundDuration = auction.roundDuration;
+    const roundEndTime = new Date(now.getTime() + roundDuration * 1000);
     auction.status = AuctionStatus.ACTIVE;
+    auction.currentRound = 1;
+    auction.roundEndTime = roundEndTime;
     await auction.save();
     return auction;
   }
