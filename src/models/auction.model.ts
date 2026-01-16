@@ -18,6 +18,8 @@ export interface IAuction extends Document {
   roundEndTime?: Date;
   currentRound: number;
   itemsPerRound: number;
+  itemsDistributed: number;
+  totalItems: number;
 }
 
 const AuctionSchema = new Schema<IAuction>(
@@ -32,6 +34,8 @@ const AuctionSchema = new Schema<IAuction>(
     roundEndTime: { type: Date },
     currentRound: { type: Number, default: 0 },
     itemsPerRound: { type: Number, required: true, min: 1 },
+    itemsDistributed: { type: Number, default: 0, min: 0 },
+    totalItems: { type: Number, required: true, min: 1 },
   }
 );
 

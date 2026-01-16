@@ -49,7 +49,7 @@ export class AuctionService {
     }
   }
 
-  async endRound(auctionId: string): Promise<string[]> {
+  async endRound(auctionId: string): Promise<{ winners: string[], nextRound: boolean }> {
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       throw new Error('Auction not found');
@@ -76,16 +76,23 @@ export class AuctionService {
       );
       winners.push(bid.bidderId);
     }
+    auction.itemsDistributed += topBids.length;
 
     // Check if we should continue to next round
     const hasMoreRounds = currentRound < auction.totalRounds;
+    const hasMoreItems = auction.itemsDistributed < auction.totalItems;
+    const activeBidsCount = await Bid.countDocuments({
+      auctionId: auction._id,
+      status: BidStatus.ACTIVE
+    });
   
-    if (hasMoreRounds) {
+    if (hasMoreRounds && hasMoreItems && activeBidsCount > 0) {
       const now = new Date();
       const roundDuration = auction.roundDuration;
       auction.currentRound = currentRound + 1;
       auction.roundEndTime = new Date(now.getTime() + roundDuration * 1000);
       await auction.save();
+      return { winners, nextRound: true };
     } else {
       auction.status = AuctionStatus.COMPLETED;
       await auction.save();
@@ -96,6 +103,8 @@ export class AuctionService {
       });
 
       for (const bid of remainingBids) {
+        bid.status = BidStatus.LOST;
+        await bid.save();
         await bidderService.refund(
           bid.bidderId, 
           bid.amount, 
@@ -103,8 +112,8 @@ export class AuctionService {
           bid.id
         );
       }
+      return { winners, nextRound: false };
     }
-    return winners;
   }
 }
 export const auctionService = new AuctionService();
