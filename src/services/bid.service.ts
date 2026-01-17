@@ -58,6 +58,7 @@ export class BidService {
       );
 
       existingBid.amount = amount;
+      existingBid.round = auction.currentRound;
       await existingBid.save();
       bid = existingBid;
     } else {

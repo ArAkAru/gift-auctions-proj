@@ -73,6 +73,7 @@ export class AuctionService {
 
     for (const bid of topBids) {
       bid.status = BidStatus.WON;
+      bid.wonInRound = auction.currentRound;
       await bid.save();
       await bidderService.charge(
         bid.bidderId, 
