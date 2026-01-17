@@ -7,6 +7,9 @@ import { bidderService } from './bidder.service';
 
 export class AuctionService {
   async create(params: CreateAuctionParams): Promise<IAuction> {
+    if (params.itemsPerRound * params.totalRounds > params.totalItems) {
+      throw new Error('itemsPerRound * totalRounds cannot exceed totalItems');
+    }
     const auction = await Auction.create(params);
     return auction;
   }
@@ -34,6 +37,7 @@ export class AuctionService {
     auction.status = AuctionStatus.ACTIVE;
     auction.currentRound = 1;
     auction.roundEndTime = roundEndTime;
+    auction.antiSnipingCount = 0;
     await auction.save();
     return auction;
   }
@@ -68,6 +72,8 @@ export class AuctionService {
       .limit(auction.itemsPerRound);
 
     for (const bid of topBids) {
+      bid.status = BidStatus.WON;
+      await bid.save();
       await bidderService.charge(
         bid.bidderId, 
         bid.amount, 
