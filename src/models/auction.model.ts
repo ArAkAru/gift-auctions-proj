@@ -20,6 +20,10 @@ export interface IAuction extends Document {
   itemsPerRound: number;
   itemsDistributed: number;
   totalItems: number;
+  antiSnipingThreshold: number;  // seconds before end to trigger
+  antiSnipingCount: number; // how many times extended this round
+  maxAntiSnipingExtensions: number; // max extensions per round
+  antiSnipingExtension: number; // how much to extend the round
 }
 
 const AuctionSchema = new Schema<IAuction>(
@@ -36,6 +40,10 @@ const AuctionSchema = new Schema<IAuction>(
     itemsPerRound: { type: Number, required: true, min: 1 },
     itemsDistributed: { type: Number, default: 0, min: 0 },
     totalItems: { type: Number, required: true, min: 1 },
+    antiSnipingThreshold: { type: Number, default: 10, min: 1 },
+    antiSnipingCount: { type: Number, default: 0 },
+    maxAntiSnipingExtensions: { type: Number, default: 10, min: 0 },
+    antiSnipingExtension: { type: Number, default: 10, min: 1 },
   }
 );
 

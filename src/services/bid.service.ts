@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Bid, IBid } from '../models/bid.model';
 import { Bid as BidEntity } from '../entities/bid';
-import { Auction } from '../models/auction.model';
+import { Auction, IAuction } from '../models/auction.model';
 import { BidStatus } from '../entities/bid';
 import { AuctionStatus } from '../models/auction.model';
 import { bidderService } from './bidder.service';
@@ -32,6 +32,7 @@ export class BidService {
     });
 
     let bid: IBid;
+    let antiSnipingTriggered = false;
 
     if (existingBid) {
       // Increase existing bid
@@ -50,6 +51,12 @@ export class BidService {
         increase,
       );
 
+      // Check for anti-sniping before updating bid
+      antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
+        auction,
+        amount
+      );
+
       existingBid.amount = amount;
       await existingBid.save();
       bid = existingBid;
@@ -63,6 +70,12 @@ export class BidService {
 
       await bidderService.holdFunds(
         bidderId,
+        amount
+      );
+
+      // Check for anti-sniping before updating bid
+      antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
+        auction,
         amount
       );
 
@@ -81,6 +94,59 @@ export class BidService {
 
   async getById(id: string): Promise<IBid | null> {
     return Bid.findById(id);
+  }
+
+  private async checkAndTriggerAntiSniping(
+    auction: IAuction,
+    newAmount: number
+  ): Promise<boolean> {
+    if (!auction.roundEndTime) {
+      return false;
+    }
+    
+    const now = new Date();
+    const timeUntilEnd = (auction.roundEndTime.getTime() - now.getTime()) / 1000;
+    
+    // Check if we're within the anti-sniping threshold
+    if (timeUntilEnd > auction.antiSnipingThreshold) {
+      return false;
+    }
+    
+    // Check if max extensions reached
+    if (auction.antiSnipingCount >= auction.maxAntiSnipingExtensions) {
+      return false;
+    }
+    
+    // Here we check if the new bid is in the top N positions
+    // Otherwise we don't need to extend the round
+    const topBids = await Bid.find({
+      auctionId: auction._id,
+      status: BidStatus.ACTIVE
+    })
+      .sort({ amount: -1, createdAt: 1 })
+      .limit(auction.itemsPerRound);
+    
+    // Edge case: if bidders are not enough to fill the top N positions, we need to use the minimum amount
+    const minTopAmount = topBids.length >= auction.itemsPerRound 
+      ? topBids[topBids.length - 1].amount 
+      : 0;
+    
+    if (newAmount >= minTopAmount) {
+      // Trigger anti-sniping - use atomic update
+      await Auction.findByIdAndUpdate(
+        auction._id,
+        {
+          $set: {
+            roundEndTime: new Date(auction.roundEndTime.getTime() + auction.antiSnipingExtension * 1000)
+          },
+          $inc: { antiSnipingCount: 1 }
+        }
+      );
+      
+      return true;
+    }
+    
+    return false;
   }
 }
 
