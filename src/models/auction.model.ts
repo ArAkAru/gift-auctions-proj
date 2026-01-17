@@ -24,6 +24,8 @@ export interface IAuction extends Document {
   antiSnipingCount: number; // how many times extended this round
   maxAntiSnipingExtensions: number; // max extensions per round
   antiSnipingExtension: number; // how much to extend the round
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const AuctionSchema = new Schema<IAuction>(
@@ -44,6 +46,8 @@ const AuctionSchema = new Schema<IAuction>(
     antiSnipingCount: { type: Number, default: 0 },
     maxAntiSnipingExtensions: { type: Number, default: 10, min: 0 },
     antiSnipingExtension: { type: Number, default: 10, min: 1 },
+  }, {
+    timestamps: true
   }
 );
 

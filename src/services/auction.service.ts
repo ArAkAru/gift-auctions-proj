@@ -97,6 +97,7 @@ export class AuctionService {
       const roundDuration = auction.roundDuration;
       auction.currentRound = currentRound + 1;
       auction.roundEndTime = new Date(now.getTime() + roundDuration * 1000);
+      auction.antiSnipingCount = 0;
       await auction.save();
       return { winners, nextRound: true };
     } else {
