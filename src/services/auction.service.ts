@@ -33,8 +33,8 @@ export class AuctionService {
       throw new Error(`Cannot start auction in ${auction.status} status`);
     }
     const now = new Date();
-    const roundDuration = auction.roundDuration;
-    const roundEndTime = new Date(now.getTime() + roundDuration * 1000);
+    const firstRoundDuration = auction.firstRoundDuration;
+    const roundEndTime = new Date(now.getTime() + firstRoundDuration * 1000);
     auction.status = AuctionStatus.ACTIVE;
     auction.currentRound = 1;
     auction.roundEndTime = roundEndTime;
