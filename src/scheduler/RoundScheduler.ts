@@ -31,6 +31,7 @@ export class RoundScheduler {
 
   private async tick(): Promise<void> {
     try {
+      await auctionService.processScheduledAuctions();
       await auctionService.processEndingRounds();
     } catch (error) {
       console.error('Scheduler tick error:', error);

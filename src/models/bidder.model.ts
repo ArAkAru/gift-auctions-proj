@@ -8,6 +8,8 @@ export interface IBalance {
 export interface IBidder extends Document {
   username: string;
   balance: IBalance;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BidderSchema = new Schema<IBidder>(
@@ -25,6 +27,8 @@ const BidderSchema = new Schema<IBidder>(
         min: 0
       }
     }
+  }, {
+    timestamps: true
   }
 );
 

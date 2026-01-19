@@ -10,7 +10,8 @@ export class AuctionService {
     if (params.itemsPerRound * params.totalRounds > params.totalItems) {
       throw new Error('itemsPerRound * totalRounds cannot exceed totalItems');
     }
-    const auction = await Auction.create(params);
+    const status = params.scheduledStartTime ? AuctionStatus.SCHEDULED : AuctionStatus.DRAFT;
+    const auction = await Auction.create({ ...params, status });
     return auction;
   }
 
@@ -28,8 +29,8 @@ export class AuctionService {
       throw new Error('Auction not found');
     }
 
-    if (auction.status !== AuctionStatus.DRAFT) {
-      throw new Error('Auction is not in draft status');
+    if (auction.status !== AuctionStatus.DRAFT && auction.status !== AuctionStatus.SCHEDULED) {
+      throw new Error(`Cannot start auction in ${auction.status} status`);
     }
     const now = new Date();
     const roundDuration = auction.roundDuration;
@@ -121,6 +122,18 @@ export class AuctionService {
         );
       }
       return { winners, nextRound: false };
+    }
+  }
+
+  async processScheduledAuctions(): Promise<void> {
+    const now = new Date();
+    const scheduledAuctions = await Auction.find({
+      status: AuctionStatus.SCHEDULED,
+      scheduledStartTime: { $lte: now }
+    });
+    
+    for (const auction of scheduledAuctions) {
+      await this.start(auction.id);
     }
   }
 }

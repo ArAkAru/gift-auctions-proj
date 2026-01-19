@@ -7,5 +7,6 @@ export interface CreateAuctionParams {
   minBidIncrement?: number;
   itemsPerRound: number;
   totalItems: number;
+  scheduledStartTime?: Date;
 }
 

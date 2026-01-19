@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export enum AuctionStatus {
     DRAFT = 'DRAFT',
+    SCHEDULED = 'SCHEDULED',
     ACTIVE = 'ACTIVE',
     COMPLETED = 'COMPLETED',
     CANCELLED = 'CANCELLED'
@@ -16,6 +17,7 @@ export interface IAuction extends Document {
   minBidIncrement: number;
   status: AuctionStatus;
   roundEndTime?: Date;
+  scheduledStartTime?: Date;
   currentRound: number;
   itemsPerRound: number;
   itemsDistributed: number;
@@ -38,6 +40,7 @@ const AuctionSchema = new Schema<IAuction>(
     minBidIncrement: { type: Number, default: 1 },
     status: { type: String, enum: AuctionStatus, default: AuctionStatus.DRAFT },
     roundEndTime: { type: Date },
+    scheduledStartTime: { type: Date },
     currentRound: { type: Number, default: 0 },
     itemsPerRound: { type: Number, required: true, min: 1 },
     itemsDistributed: { type: Number, default: 0, min: 0 },
