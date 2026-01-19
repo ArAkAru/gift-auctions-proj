@@ -36,9 +36,9 @@ export class BidderService {
     );
 
     if (!result) {
-      const user = await Bidder.findById(bidderId);
-      if (!user) {
-        throw new Error('User not found');
+      const bidder = await Bidder.findById(bidderId);
+      if (!bidder) {
+        throw new Error('Bidder not found');
       }
       throw new Error('Insufficient held funds');
     }
@@ -87,14 +87,37 @@ export class BidderService {
     );
 
     if (!result) {
-      const user = await Bidder.findById(bidderId);
-      if (!user) {
-        throw new Error('User not found');
+      const bidder = await Bidder.findById(bidderId);
+      if (!bidder) {
+        throw new Error('Bidder not found');
       }
       throw new Error('Insufficient funds');
     }
 
     return result;
+  }
+
+  async deposit(bidderId: string, amount: number): Promise<IBidder> {
+    if (amount <= 0) {
+      throw new Error('Deposit amount must be positive');
+    }
+    
+    const bidder = await Bidder.findById(bidderId);
+    if (!bidder) {
+      throw new Error('Bidder not found');
+    }
+    
+    const updatedBidder = await Bidder.findByIdAndUpdate(
+      bidderId,
+      { $inc: { 'balance.available': amount } },
+      { new: true }
+    );
+    
+    if (!updatedBidder) {
+      throw new Error('Failed to update bidder');
+    }
+    
+    return updatedBidder;
   }
 }
 

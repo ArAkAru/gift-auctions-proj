@@ -96,7 +96,7 @@ export class AuctionService {
   
     if (hasMoreRounds && hasMoreItems && activeBidsCount > 0) {
       const now = new Date();
-      const roundDuration = auction.roundDuration;
+      const roundDuration = auction.regularRoundDuration;
       auction.currentRound = currentRound + 1;
       auction.roundEndTime = new Date(now.getTime() + roundDuration * 1000);
       auction.antiSnipingCount = 0;

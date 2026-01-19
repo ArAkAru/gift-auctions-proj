@@ -13,7 +13,7 @@ export interface IAuction extends Document {
   description?: string;
   totalRounds: number;
   firstRoundDuration: number;
-  roundDuration: number;
+  regularRoundDuration: number;
   minBid: number;
   minBidIncrement: number;
   status: AuctionStatus;
@@ -37,7 +37,7 @@ const AuctionSchema = new Schema<IAuction>(
     description: { type: String },
     totalRounds: { type: Number, required: true },
     firstRoundDuration: { type: Number, required: true },
-    roundDuration: { type: Number, required: true },
+    regularRoundDuration: { type: Number, required: true },
     minBid: { type: Number, default: 1 },
     minBidIncrement: { type: Number, default: 1 },
     status: { type: String, enum: AuctionStatus, default: AuctionStatus.DRAFT },
