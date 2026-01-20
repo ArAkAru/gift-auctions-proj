@@ -108,30 +108,46 @@ async function getLeaderboard(auctionId: string): Promise<any[]> {
 }
 
 function calculateBid(bot: Bot, currentTopBid: number, minBid: number, myCurrentBid: number): number | null {
-  const baseAmount = Math.max(minBid, currentTopBid + 10);
+  // Минимальная валидная ставка
+  const minValidBid = Math.max(minBid, currentTopBid + 10);
+  
+  // Если даже минимальная ставка больше нашего лимита — пропускаем
+  if (minValidBid > bot.maxBid) {
+    return null;
+  }
+  
+  let targetBid: number;
   
   switch (bot.strategy) {
     case 'aggressive':
-      // Всегда стремится быть #1, ставит на 10-50% больше топа
-      const aggressiveBid = Math.min(
-        bot.maxBid,
-        currentTopBid + Math.floor(Math.random() * (currentTopBid * 0.5)) + 10
-      );
-      return aggressiveBid > myCurrentBid ? aggressiveBid : null;
+      // Ставим 10-50% больше топа, но не меньше минимальной валидной ставки
+      const extra = Math.floor(Math.random() * (currentTopBid * 0.5)) + 10;
+      targetBid = Math.max(minValidBid, currentTopBid + extra);
+      break;
       
     case 'conservative':
-      // Ставит минимально достаточно, чтобы быть в выигрышных позициях
-      const conservativeBid = Math.min(bot.maxBid, baseAmount);
-      return conservativeBid > myCurrentBid ? conservativeBid : null;
+      // Ставим минимально необходимое
+      targetBid = minValidBid;
+      break;
       
     case 'sniper':
-      // Ставит только в конце раунда
-      const sniperBid = Math.min(bot.maxBid, currentTopBid + 20);
-      return sniperBid > myCurrentBid ? sniperBid : null;
+      // Ставим чуть больше топа (минимальный инкремент)
+      targetBid = minValidBid;
+      break;
       
     default:
       return null;
   }
+  
+  // Ограничиваем максимумом бота
+  const finalBid = Math.min(targetBid, bot.maxBid);
+  
+  // Проверяем что новая ставка больше текущей и имеет смысл
+  if (finalBid <= myCurrentBid || finalBid < minValidBid) {
+    return null;
+  }
+  
+  return finalBid;
 }
 
 async function runSimulation(config: BotConfig) {
