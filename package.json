@@ -10,7 +10,8 @@
       "lint": "eslint src/**/*.ts",
       "clean": "rm -rf dist",
       "fill": "npx ts-node scripts/data-fill.ts",
-      "simulate": "npx ts-node scripts/simulation.ts"
+      "simulate": "npx ts-node scripts/simulation.ts",
+      "stress": "npx ts-node scripts/stress.ts"
     },
     "keywords": [],
     "author": "",

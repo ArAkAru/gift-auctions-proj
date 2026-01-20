@@ -57,7 +57,10 @@ router.post('/:id/cancel', (req: Request, res: Response) => {
 // Create a new bid
 router.post('/:id/bids', async (req: Request, res: Response) => {
   try {
-    const result = await bidService.create(req.body);
+    const result = await bidService.create({
+      ...req.body,
+      auctionId: req.params.id
+    });
     
     res.status(201).json({
       ...result.bid.toObject(),
