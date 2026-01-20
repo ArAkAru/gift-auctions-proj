@@ -8,5 +8,4 @@ export interface Bid {
     auctionId: string;
     bidderId: string;
     amount: number;
-    status: BidStatus;
 }

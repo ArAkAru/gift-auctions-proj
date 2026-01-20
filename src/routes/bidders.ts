@@ -41,4 +41,17 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+router.post('/:id/deposit', async (req: Request, res: Response) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      res.status(400).json({ error: 'Amount must be a positive number' });
+      return;
+    }
+    const bidder = await bidderService.deposit(req.params.id, amount);
+    res.json(bidder);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Failed to deposit' });
+  }
+});
 export default router;

@@ -9,5 +9,7 @@ export interface CreateAuctionParams {
   itemsPerRound: number;
   totalItems: number;
   scheduledStartTime?: Date;
+  antiSnipingThreshold?: number;
+  antiSnipingExtension?: number;
 }
 

@@ -1,3 +1,4 @@
+export {}; 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 
 async function api(endpoint: string, options?: RequestInit): Promise<{ ok: boolean; data: any }> {
@@ -47,7 +48,7 @@ async function fillDatabase() {
     }
   }
   
-  // Create demo auction
+  // Создаём демо-аукцион
   console.log('\nCreating demo auction...');
   
   const auctionRes = await api('/auctions', {
@@ -56,13 +57,13 @@ async function fillDatabase() {
       name: 'Demo Auction - Digital Collectibles',
       description: 'A demo auction with fast rounds for testing',
       totalRounds: 10,
-      firstRoundDuration: 120,  // 2 minutes
-      regularRoundDuration: 60,  // 1 minute
+      firstRoundDuration: 120,  // 2 минуты
+      regularRoundDuration: 60,  // 1 минута
       minBid: 100,
       minBidIncrement: 10,
       itemsPerRound: 5,
       totalItems: 50,
-      scheduledStartTime: new Date(Date.now() + 1000 * 60) // 1 minute from now
+      scheduledStartTime: new Date(Date.now() + 1000 * 60) // через 1 минуту
     })
   });
   
@@ -81,4 +82,3 @@ async function fillDatabase() {
 }
 
 fillDatabase().catch(console.error);
-

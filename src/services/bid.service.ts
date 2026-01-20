@@ -6,8 +6,14 @@ import { BidStatus } from '../entities/bid';
 import { AuctionStatus } from '../models/auction.model';
 import { bidderService } from './bidder.service';
 
+export interface BidResult {
+  bid: IBid;
+  rank: number;
+  antiSnipingTriggered: boolean;
+}
+
 export class BidService {
-  async create(bidEntity: BidEntity): Promise<IBid> {
+  async create(bidEntity: BidEntity): Promise<BidResult> {
     const { auctionId, bidderId, amount } = bidEntity;
     const auction = await Auction.findById(auctionId);
     if (!auction) {
@@ -82,7 +88,28 @@ export class BidService {
 
       await bid.save();
     }
-    return bid;
+    const rank = await this.calculateRank(auctionId, bid._id.toString());
+
+    return { bid, rank, antiSnipingTriggered };
+  }
+
+  private async calculateRank(auctionId: string, bidId: string): Promise<number> {
+    const bid = await Bid.findById(bidId);
+    if (!bid) {
+      throw new Error('Bid not found');
+    }
+    
+    // Count bids with higher amount, or same amount but earlier timestamp
+    const higherBids = await Bid.countDocuments({
+      auctionId: new mongoose.Types.ObjectId(auctionId),
+      status: BidStatus.ACTIVE,
+      $or: [
+        { amount: { $gt: bid.amount } },
+        { amount: bid.amount, createdAt: { $lt: bid.createdAt } }
+      ]
+    });
+    
+    return higherBids + 1;
   }
 
   async getBidByBidderId(bidderId: string): Promise<IBid[]> {

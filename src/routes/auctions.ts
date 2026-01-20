@@ -32,7 +32,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Auction not found' });
       return;
     }
-    res.json(auction);
+    // Include timeRemaining in response
+    res.json(auctionService.getAuctionWithTimeRemaining(auction));
   } catch (error) {
     res.status(500).json({ error: 'Failed to get auction' });
   }
@@ -56,10 +57,15 @@ router.post('/:id/cancel', (req: Request, res: Response) => {
 // Create a new bid
 router.post('/:id/bids', async (req: Request, res: Response) => {
   try {
-    const bid = await bidService.create(req.body);
-    res.status(201).json(bid);
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to place bid' });
+    const result = await bidService.create(req.body);
+    
+    res.status(201).json({
+      ...result.bid.toObject(),
+      rank: result.rank,
+      antiSnipingTriggered: result.antiSnipingTriggered
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Failed to place bid' });
   }
 });
 
@@ -72,4 +78,25 @@ router.get('/:id/bids', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to get bids' });
   }
 });
+
+// Get leaderboard for an auction
+router.get('/:id/leaderboard', async (req: Request, res: Response) => {
+  try {
+    const leaderboard = await auctionService.getLeaderboard(req.params.id);
+    res.json(leaderboard);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get leaderboard' });
+  }
+});
+
+// Get winners for an auction
+router.get('/:id/winners', async (req: Request, res: Response) => {
+  try {
+    const winners = await auctionService.getWinners(req.params.id);
+    res.json(winners);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get winners' });
+  }
+});
+
 export default router;

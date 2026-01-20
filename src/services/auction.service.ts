@@ -136,5 +136,63 @@ export class AuctionService {
       await this.start(auction.id);
     }
   }
+
+  async getLeaderboard(auctionId: string): Promise<Array<{ bidderId: string; username: string; amount: number; rank: number }>> {
+    const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      throw new Error('Auction not found');
+    }
+    const bids = await Bid.find({
+      auctionId,
+      status: BidStatus.ACTIVE
+    })
+      .sort({ amount: -1, createdAt: 1 });
+    
+    // Get bidder info for each bid
+    const leaderboard = [];
+    for (let i = 0; i < bids.length; i++) {
+      const bid = bids[i];
+      const bidder = await bidderService.getById(bid.bidderId);
+      leaderboard.push({
+        bidderId: bid.bidderId,
+        username: bidder?.username || 'Unknown',
+        amount: bid.amount,
+        rank: i + 1
+      });
+    }
+    return leaderboard;
+  }
+
+  async getWinners(auctionId: string): Promise<Array<{ bidderId: string; username: string; amount: number; round: number; itemNumber: number }>> {
+    const winningBids = await Bid.find({
+      auctionId,
+      status: BidStatus.WON
+    })
+      .sort({ wonInRound: 1, amount: -1 });
+    
+    const winners = [];
+    let itemNumber = 1;
+    for (const bid of winningBids) {
+      const bidder = await bidderService.getById(bid.bidderId);
+      winners.push({
+        bidderId: bid.bidderId,
+        username: bidder?.username || 'Unknown',
+        amount: bid.amount,
+        round: bid.wonInRound || 0,
+        itemNumber: itemNumber++
+      });
+    }
+    return winners;
+  }
+
+  getAuctionWithTimeRemaining(auction: IAuction): IAuction & { timeRemaining: number | null } {
+    const timeRemaining = auction.roundEndTime
+      ? Math.max(0, Math.floor((auction.roundEndTime.getTime() - Date.now()) / 1000))
+      : null;
+    return {
+      ...auction.toObject(),
+      timeRemaining
+    };
+  }
 }
 export const auctionService = new AuctionService();
