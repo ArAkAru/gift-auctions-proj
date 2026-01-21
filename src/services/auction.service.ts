@@ -137,7 +137,7 @@ export class AuctionService {
     }
   }
 
-  async getLeaderboard(auctionId: string): Promise<Array<{ bidderId: string; username: string; amount: number; rank: number }>> {
+  async getLeaderboard(auctionId: string): Promise<Array<{ bidderId: string; username: string; amount: number; rank: number; isWinningPosition: boolean }>> {
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       throw new Error('Auction not found');
@@ -148,7 +148,6 @@ export class AuctionService {
     })
       .sort({ amount: -1, createdAt: 1 });
     
-    // Get bidder info for each bid
     const leaderboard = [];
     for (let i = 0; i < bids.length; i++) {
       const bid = bids[i];
@@ -157,7 +156,8 @@ export class AuctionService {
         bidderId: bid.bidderId,
         username: bidder?.username || 'Unknown',
         amount: bid.amount,
-        rank: i + 1
+        rank: i + 1,
+        isWinningPosition: i < auction.itemsPerRound
       });
     }
     return leaderboard;

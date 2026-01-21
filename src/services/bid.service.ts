@@ -124,6 +124,23 @@ export class BidService {
     return Bid.findById(id);
   }
 
+  async getStatsByAuctionId(auctionId: string): Promise<{ totalActiveBids: number; highestBid: number }> {
+    const totalActiveBids = await Bid.countDocuments({
+      auctionId: new mongoose.Types.ObjectId(auctionId),
+      status: BidStatus.ACTIVE
+    });
+    
+    const highestBid = await Bid.findOne({
+      auctionId: new mongoose.Types.ObjectId(auctionId),
+      status: BidStatus.ACTIVE
+    }).sort({ amount: -1 });
+
+    return {
+      totalActiveBids,
+      highestBid: highestBid?.amount || 0
+    };
+  }
+
   private async checkAndTriggerAntiSniping(
     auction: IAuction,
     newAmount: number

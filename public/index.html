@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auction System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0a0f;
+      --bg-card: #12121a;
+      --bg-card-hover: #1a1a25;
+      --border: #2a2a3a;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a0;
+      --accent-cyan: #00d4ff;
+      --accent-magenta: #ff006e;
+      --accent-gold: #ffd700;
+      --accent-green: #00ff88;
+      --accent-red: #ff3366;
+      --gradient-1: linear-gradient(135deg, #00d4ff 0%, #ff006e 100%);
+      --gradient-2: linear-gradient(135deg, #ffd700 0%, #ff006e 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255, 0, 110, 0.08) 0%, transparent 50%);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem 0;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 2rem;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+    }
+
+    .balance-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+    }
+
+    .balance-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .balance-row:last-child {
+      border-bottom: none;
+    }
+
+    .balance-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .balance-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    .balance-value.available {
+      color: var(--accent-green);
+    }
+
+    .balance-value.held {
+      color: var(--accent-gold);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+    }
+
+    input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: var(--gradient-1);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    button.secondary:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 212, 255, 0.1);
+      box-shadow: none;
+    }
+
+    button.danger {
+      background: var(--accent-red);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .auction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .auction-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .auction-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--accent-green);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent-green);
+    }
+
+    .auction-status.active {
+      background: rgba(0, 255, 136, 0.1);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .auction-status.completed {
+      background: rgba(136, 136, 160, 0.1);
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .auction-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 3rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1.5rem;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .round-info {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .round-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .round-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .round-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .leaderboard {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .leaderboard-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .leaderboard-item.winning {
+      background: rgba(0, 255, 136, 0.05);
+      border-left: 3px solid var(--accent-green);
+    }
+
+    .leaderboard-item.current-bidder {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .rank {
+      width: 40px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .rank.winning {
+      color: var(--accent-gold);
+    }
+
+    .bidder-name {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .bid-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .bid-form {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .bid-form input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .bid-form button {
+      width: auto;
+      padding: 0.875rem 2rem;
+    }
+
+    .auction-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .auction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .auction-item:hover {
+      border-color: var(--accent-cyan);
+      transform: translateX(4px);
+    }
+
+    .auction-item.selected {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 212, 255, 0.05);
+    }
+
+    .auction-item-name {
+      font-weight: 500;
+    }
+
+    .auction-item-info {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 500;
+      width: auto;
+    }
+
+    .tab:hover {
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tab.active {
+      background: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      color: var(--bg-dark);
+    }
+
+    .winners-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .winner-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .winner-item:nth-child(odd) {
+      background: rgba(255, 215, 0, 0.03);
+    }
+
+    .item-number {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-gold);
+    }
+
+    .message {
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .message.success {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .message.error {
+      background: rgba(255, 51, 102, 0.1);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .create-form {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .bidder-select-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .bidder-select-row select {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .bidder-select-row button {
+      width: auto;
+      padding: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚡ CryptoBot Auction</h1>
+      <p class="subtitle">Multi-round digital item auctions</p>
+    </header>
+
+    <div id="message" class="message hidden"></div>
+
+    <div class="grid">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-title">Current Bidder</div>
+          <div class="bidder-select-row">
+            <select id="bidderSelect" onchange="selectBidder(this.value)">
+              <option value="">Select bidder...</option>
+            </select>
+            <button class="secondary" onclick="showCreateBidder()" title="Create new bidder">+</button>
+          </div>
+          <div id="createBidderForm" class="hidden" style="margin-top: 1rem;">
+            <input type="text" id="newUsername" placeholder="Username">
+            <input type="number" id="newBidderBalance" placeholder="Initial balance (Stars)">
+            <button onclick="createBidder()">Create Bidder</button>
+          </div>
+        </div>
+
+        <div class="card" id="balanceCard">
+          <div class="card-title">Balance</div>
+          <div id="balanceDisplay">
+            <div class="empty-state">Select a bidder</div>
+          </div>
+        </div>
+
+        <div class="card" id="depositCard">
+          <div class="card-title">Deposit Stars</div>
+          <input type="number" id="depositAmount" placeholder="Amount">
+          <button onclick="deposit()">Deposit</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Auctions</div>
+          <div id="auctionsList" class="auction-list">
+            <div class="loading">Loading...</div>
+          </div>
+          <button class="secondary" style="margin-top: 1rem;" onclick="showCreateAuction()">+ Create Auction</button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div id="auctionView">
+          <div class="empty-state">
+            <p>Select an auction from the sidebar or create a new one</p>
+          </div>
+        </div>
+
+        <div id="createAuctionForm" class="card hidden">
+          <div class="card-title">Create New Auction</div>
+          <div class="create-form">
+            <div>
+              <label>Name</label>
+              <input type="text" id="auctionName" placeholder="Auction name">
+            </div>
+            <div class="form-row">
+              <div>
+                <label>Total Items</label>
+                <input type="number" id="totalItems" value="100">
+              </div>
+              <div>
+                <label>Total Rounds</label>
+                <input type="number" id="totalRounds" value="10">
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label>Items per Round</label>
+                <input type="number" id="itemsPerRound" value="10">
+              </div>
+              <div>
+                <label>Min Bid (Stars)</label>
+                <input type="number" id="minBid" value="100">
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label>First Round Duration (sec)</label>
+                <input type="number" id="firstRoundDuration" value="120">
+              </div>
+              <div>
+                <label>Regular Round Duration (sec)</label>
+                <input type="number" id="regularRoundDuration" value="60">
+              </div>
+            </div>
+            <button onclick="createAuction()">Create Auction</button>
+            <button class="secondary" onclick="hideCreateAuction()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentBidder = null;
+    let currentAuction = null;
+    let refreshInterval = null;
+
+    async function init() {
+      await loadBidders();
+      await loadAuctions();
+    }
+
+    function showMessage(text, type = 'success') {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+      setTimeout(() => msg.className = 'message hidden', 3000);
+    }
+
+    async function loadBidders() {
+      try {
+        const res = await fetch(`/bidders`);
+        const bidders = await res.json();
+        const select = document.getElementById('bidderSelect');
+        select.innerHTML = '<option value="">Select bidder...</option>' +
+          bidders.map(b => `<option value="${b._id}">${b.username}</option>`).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showCreateBidder() {
+      document.getElementById('createBidderForm').classList.toggle('hidden');
+    }
+
+    async function createBidder() {
+      const username = document.getElementById('newUsername').value;
+      const balance = parseInt(document.getElementById('newBidderBalance').value) || 0;
+      
+      if (!username) {
+        showMessage('Username is required', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/bidders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, balance })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error);
+        }
+        
+        const bidder = await res.json();
+        showMessage(`Bidder ${username} created!`);
+        document.getElementById('createBidderForm').classList.add('hidden');
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newBidderBalance').value = '';
+        await loadBidders();
+        document.getElementById('bidderSelect').value = bidder._id;
+        selectBidder(bidder._id);
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function selectBidder(bidderId) {
+      if (!bidderId) {
+        currentBidder = null;
+        document.getElementById('balanceDisplay').innerHTML = '<div class="empty-state">Select a bidder</div>';
+        return;
+      }
+      
+      try {
+        const res = await fetch(`/bidders/${bidderId}`);
+        currentBidder = await res.json();
+        updateBalanceDisplay();
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    function updateBalanceDisplay() {
+      if (!currentBidder) return;
+      
+      const total = currentBidder.balance.available + currentBidder.balance.held;
+      document.getElementById('balanceDisplay').innerHTML = `
+        <div class="balance-display">${total} ⭐</div>
+        <div style="margin-top: 1rem;">
+          <div class="balance-row">
+            <span class="balance-label">Available</span>
+            <span class="balance-value available">${currentBidder.balance.available} ⭐</span>
+          </div>
+          <div class="balance-row">
+            <span class="balance-label">Held in bids</span>
+            <span class="balance-value held">${currentBidder.balance.held} ⭐</span>
+          </div>
+        </div>
+      `;
+    }
+
+    async function deposit() {
+      if (!currentBidder) {
+        showMessage('Select a bidder first', 'error');
+        return;
+      }
+      
+      const amount = parseInt(document.getElementById('depositAmount').value);
+      if (!amount || amount <= 0) {
+        showMessage('Enter a valid amount', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/bidders/${currentBidder._id}/deposit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount })
+        });
+        
+        if (!res.ok) throw new Error((await res.json()).error);
+        
+        const data = await res.json();
+        currentBidder.balance = data.balance;
+        updateBalanceDisplay();
+        document.getElementById('depositAmount').value = '';
+        showMessage(`Deposited ${amount} Stars!`);
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function loadAuctions() {
+      try {
+        const res = await fetch(`/auctions`);
+        const auctions = await res.json();
+        
+        const list = document.getElementById('auctionsList');
+        if (auctions.length === 0) {
+          list.innerHTML = '<div class="empty-state">No auctions yet</div>';
+          return;
+        }
+        
+        list.innerHTML = auctions.map(a => `
+          <div class="auction-item ${currentAuction?._id === a._id ? 'selected' : ''}" 
+               onclick="selectAuction('${a._id}')">
+            <div>
+              <div class="auction-item-name">${a.name}</div>
+              <div class="auction-item-info">
+                Round ${a.currentRound}/${a.totalRounds} • ${a.itemsDistributed}/${a.totalItems} items
+              </div>
+            </div>
+            <span class="auction-status ${a.status.toLowerCase()}">${a.status}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showCreateAuction() {
+      document.getElementById('createAuctionForm').classList.remove('hidden');
+      document.getElementById('auctionView').classList.add('hidden');
+    }
+
+    function hideCreateAuction() {
+      document.getElementById('createAuctionForm').classList.add('hidden');
+      document.getElementById('auctionView').classList.remove('hidden');
+    }
+
+    async function createAuction() {
+      const data = {
+        name: document.getElementById('auctionName').value,
+        totalItems: parseInt(document.getElementById('totalItems').value),
+        totalRounds: parseInt(document.getElementById('totalRounds').value),
+        itemsPerRound: parseInt(document.getElementById('itemsPerRound').value),
+        minBid: parseInt(document.getElementById('minBid').value),
+        firstRoundDuration: parseInt(document.getElementById('firstRoundDuration').value),
+        regularRoundDuration: parseInt(document.getElementById('regularRoundDuration').value)
+      };
+
+      if (!data.name) {
+        showMessage('Auction name is required', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/auctions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!res.ok) throw new Error((await res.json()).error);
+        
+        const auction = await res.json();
+        showMessage('Auction created!');
+        hideCreateAuction();
+        await loadAuctions();
+        selectAuction(auction._id);
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function selectAuction(auctionId) {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+      
+      try {
+        const res = await fetch(`/auctions/${auctionId}`);
+        currentAuction = await res.json();
+        renderAuction();
+        loadAuctions();
+        
+        if (currentAuction.status === 'ACTIVE') {
+          refreshInterval = setInterval(() => refreshAuction(), 1000);
+        }
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function refreshAuction() {
+      if (!currentAuction) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}`);
+        const auction = await res.json();
+        
+        if (auction.status !== currentAuction.status) {
+          currentAuction = auction;
+          renderAuction();
+          loadAuctions();
+          if (currentBidder) selectBidder(currentBidder._id);
+          return;
+        }
+        
+        currentAuction = auction;
+        updateTimerAndLeaderboard();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function updateTimerAndLeaderboard() {
+      const timerEl = document.getElementById('auctionTimer');
+      if (timerEl && currentAuction.timeRemaining !== null) {
+        const mins = Math.floor(currentAuction.timeRemaining / 60);
+        const secs = currentAuction.timeRemaining % 60;
+        timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      await loadStats();
+      await loadLeaderboard();
+    }
+
+    async function renderAuction() {
+      if (!currentAuction) return;
+      
+      const view = document.getElementById('auctionView');
+      const a = currentAuction;
+      
+      let controlsHtml = '';
+      if (a.status === 'DRAFT') {
+        controlsHtml = `
+          <button onclick="startAuction()">Start Auction</button>
+          <button class="danger" onclick="cancelAuction()">Cancel</button>
+        `;
+      } else if (a.status === 'ACTIVE') {
+        controlsHtml = `
+          <button class="danger" onclick="cancelAuction()">Cancel Auction</button>
+        `;
+      }
+      
+      const bidFormHtml = a.status === 'ACTIVE' ? `
+        <div class="card">
+          <div class="card-title">Place Bid</div>
+          <div class="bid-form">
+            <input type="number" id="bidAmount" placeholder="Amount (min: ${a.minBid} Stars)">
+            <button onclick="placeBid()">Bid</button>
+          </div>
+        </div>
+      ` : '';
+      
+      view.innerHTML = `
+        <div class="card">
+          <div class="auction-header">
+            <h2 class="auction-title">${a.name}</h2>
+            <span class="auction-status ${a.status.toLowerCase()}">${a.status}</span>
+          </div>
+          
+          ${a.status === 'ACTIVE' ? `
+            <div class="timer-display" id="auctionTimer">--:--</div>
+          ` : ''}
+          
+          <div class="round-info" id="auctionStats">
+            <div class="round-stat">
+              <span class="round-stat-value">${a.currentRound}/${a.totalRounds}</span>
+              <span class="round-stat-label">Round</span>
+            </div>
+            <div class="round-stat">
+              <span class="round-stat-value" id="statsBidders">0</span>
+              <span class="round-stat-label">Bidders</span>
+            </div>
+            <div class="round-stat">
+              <span class="round-stat-value" id="statsHighestBid">0</span>
+              <span class="round-stat-label">Top Bid</span>
+            </div>
+            <div class="round-stat">
+              <span class="round-stat-value">${a.itemsDistributed}/${a.totalItems}</span>
+              <span class="round-stat-label">Items</span>
+            </div>
+          </div>
+          
+          ${controlsHtml ? `<div style="display: flex; gap: 0.75rem; margin-top: 1rem;">${controlsHtml}</div>` : ''}
+        </div>
+        
+        ${bidFormHtml}
+        
+        <div class="card">
+          <div class="tabs">
+            <button class="tab active" onclick="showTab('leaderboard', this)">Leaderboard</button>
+            <button class="tab" onclick="showTab('winners', this)">Winners</button>
+          </div>
+          
+          <div id="leaderboardTab" class="leaderboard">
+            <div class="loading">Loading...</div>
+          </div>
+          
+          <div id="winnersTab" class="winners-list hidden">
+            <div class="loading">Loading...</div>
+          </div>
+        </div>
+      `;
+      
+      if (a.status === 'ACTIVE' && a.timeRemaining !== null) {
+        const mins = Math.floor(a.timeRemaining / 60);
+        const secs = a.timeRemaining % 60;
+        document.getElementById('auctionTimer').textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      await loadStats();
+      await loadLeaderboard();
+      await loadWinners();
+    }
+
+    async function loadStats() {
+      if (!currentAuction) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/stats`);
+        const stats = await res.json();
+        
+        const biddersEl = document.getElementById('statsBidders');
+        const highestEl = document.getElementById('statsHighestBid');
+        
+        if (biddersEl) biddersEl.textContent = stats.totalActiveBids;
+        if (highestEl) highestEl.textContent = stats.highestBid;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showTab(tab, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      
+      document.getElementById('leaderboardTab').classList.toggle('hidden', tab !== 'leaderboard');
+      document.getElementById('winnersTab').classList.toggle('hidden', tab !== 'winners');
+    }
+
+    async function loadLeaderboard() {
+      if (!currentAuction) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/leaderboard`);
+        const leaderboard = await res.json();
+        
+        const el = document.getElementById('leaderboardTab');
+        if (leaderboard.length === 0) {
+          el.innerHTML = '<div class="empty-state">No bids yet</div>';
+          return;
+        }
+        
+        el.innerHTML = leaderboard.map(entry => `
+          <div class="leaderboard-item ${entry.isWinningPosition ? 'winning' : ''} ${currentBidder && entry.bidderId === currentBidder._id ? 'current-bidder' : ''}">
+            <span class="rank ${entry.isWinningPosition ? 'winning' : ''}">#${entry.rank}</span>
+            <span class="bidder-name">${entry.username}</span>
+            <span class="bid-amount">${entry.amount} ⭐</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadWinners() {
+      if (!currentAuction) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/winners`);
+        const winners = await res.json();
+        
+        const el = document.getElementById('winnersTab');
+        if (winners.length === 0) {
+          el.innerHTML = '<div class="empty-state">No winners yet</div>';
+          return;
+        }
+        
+        el.innerHTML = winners.map(w => `
+          <div class="winner-item">
+            <span class="item-number">Item #${w.itemNumber}</span>
+            <span>${w.username}</span>
+            <span class="bid-amount">${w.amount} ⭐</span>
+            <span style="color: var(--text-secondary)">Round ${w.round}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function startAuction() {
+      if (!currentAuction) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/start`, { method: 'POST' });
+        if (!res.ok) throw new Error((await res.json()).error);
+        
+        showMessage('Auction started!');
+        selectAuction(currentAuction._id);
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function cancelAuction() {
+      if (!currentAuction) return;
+      if (!confirm('Are you sure you want to cancel this auction?')) return;
+      
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/cancel`, { method: 'POST' });
+        if (!res.ok) throw new Error((await res.json()).error);
+        
+        showMessage('Auction cancelled');
+        selectAuction(currentAuction._id);
+        if (currentBidder) selectBidder(currentBidder._id);
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    async function placeBid() {
+      if (!currentBidder) {
+        showMessage('Select a bidder first', 'error');
+        return;
+      }
+      if (!currentAuction) {
+        showMessage('Select an auction first', 'error');
+        return;
+      }
+      
+      const amount = parseInt(document.getElementById('bidAmount').value);
+      if (!amount || amount < currentAuction.minBid) {
+        showMessage(`Minimum bid is ${currentAuction.minBid} Stars`, 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/auctions/${currentAuction._id}/bids`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bidderId: currentBidder._id, amount })
+        });
+        
+        if (!res.ok) throw new Error((await res.json()).error);
+        
+        const data = await res.json();
+        showMessage(`Bid placed! Your rank: #${data.rank}${data.antiSnipingTriggered ? ' (Timer extended!)' : ''}`);
+        document.getElementById('bidAmount').value = '';
+        selectBidder(currentBidder._id);
+        refreshAuction();
+      } catch (e) {
+        showMessage(e.message, 'error');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

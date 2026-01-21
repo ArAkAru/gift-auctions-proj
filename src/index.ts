@@ -28,6 +28,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/auctions', auctionsRouter);
 app.use('/bidders', biddersRouter);
+app.use(express.static('public'));
 
 const startServer = async () => {
   try {

@@ -24,7 +24,6 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get an auction by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const auction = await auctionService.getById(req.params.id);
@@ -32,7 +31,6 @@ router.get('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Auction not found' });
       return;
     }
-    // Include timeRemaining in response
     res.json(auctionService.getAuctionWithTimeRemaining(auction));
   } catch (error) {
     res.status(500).json({ error: 'Failed to get auction' });
@@ -82,13 +80,21 @@ router.get('/:id/bids', async (req: Request, res: Response) => {
   }
 });
 
-// Get leaderboard for an auction
 router.get('/:id/leaderboard', async (req: Request, res: Response) => {
   try {
     const leaderboard = await auctionService.getLeaderboard(req.params.id);
     res.json(leaderboard);
   } catch (error) {
     res.status(500).json({ error: 'Failed to get leaderboard' });
+  }
+});
+
+router.get('/:id/stats', async (req: Request, res: Response) => {
+  try {
+    const stats = await bidService.getStatsByAuctionId(req.params.id);
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get stats' });
   }
 });
 
