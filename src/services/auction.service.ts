@@ -6,6 +6,7 @@ import { BidStatus } from '../entities/bid';
 import { bidderService } from './bidder.service';
 
 export class AuctionService {
+
   async create(params: CreateAuctionParams): Promise<IAuction> {
     if (params.itemsPerRound * params.totalRounds > params.totalItems) {
       throw new Error('itemsPerRound * totalRounds cannot exceed totalItems');
@@ -78,15 +79,13 @@ export class AuctionService {
       await bid.save();
       await bidderService.charge(
         bid.bidderId, 
-        bid.amount, 
-        auction.id, 
-        bid.id
+        bid.amount,
       );
       winners.push(bid.bidderId);
     }
     auction.itemsDistributed += topBids.length;
 
-    // Check if we should continue to next round
+    // Проверка, нужно ли продолжать следующий раунд
     const hasMoreRounds = currentRound < auction.totalRounds;
     const hasMoreItems = auction.itemsDistributed < auction.totalItems;
     const activeBidsCount = await Bid.countDocuments({
@@ -116,9 +115,7 @@ export class AuctionService {
         await bid.save();
         await bidderService.refund(
           bid.bidderId, 
-          bid.amount, 
-          auction.id, 
-          bid.id
+          bid.amount,
         );
       }
       return { winners, nextRound: false };
@@ -195,4 +192,5 @@ export class AuctionService {
     };
   }
 }
+
 export const auctionService = new AuctionService();

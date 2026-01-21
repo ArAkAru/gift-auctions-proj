@@ -12,16 +12,6 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Request logging
-app.use((req: Request, res: Response, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`${req.method} ${req.url} ${res.statusCode} - ${duration}ms`);
-  });
-  next();
-});
-
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Gift Auctions API is running' });
 });

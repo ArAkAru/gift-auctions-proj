@@ -23,10 +23,10 @@ export interface IAuction extends Document {
   itemsPerRound: number;
   itemsDistributed: number;
   totalItems: number;
-  antiSnipingThreshold: number;  // seconds before end to trigger
-  antiSnipingCount: number; // how many times extended this round
-  maxAntiSnipingExtensions: number; // max extensions per round
-  antiSnipingExtension: number; // how much to extend the round
+  antiSnipingThreshold: number;  // секунд до конца для срабатывания
+  antiSnipingCount: number; // сколько раз продлён этот раунд
+  maxAntiSnipingExtensions: number; // макс. продлений за раунд
+  antiSnipingExtension: number; // на сколько продлевать раунд
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,4 +61,3 @@ AuctionSchema.index({ status: 1, roundEndTime: 1 });
 AuctionSchema.index({ status: 1, scheduledStartTime: 1 });
 
 export const Auction = mongoose.model<IAuction>('Auction', AuctionSchema);
-

@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { bidderService } from '../services/bidder.service';
-import { bidService } from '../services/bid.service';
 
 const router = Router();
 
-// Create a new bidder
+// Создание нового участника
 router.post('/', async (req: Request, res: Response) => {
   try {
     const bidder = await bidderService.create({
@@ -17,7 +16,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get all bidders
+// Получение всех участников
 router.get('/', async (req: Request, res: Response) => {
   try {
     const bidders = await bidderService.getAll();
@@ -27,7 +26,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get a bidder by ID
+// Получение участника по ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const bidder = await bidderService.getById(req.params.id);
@@ -41,6 +40,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Пополнение баланса участника
 router.post('/:id/deposit', async (req: Request, res: Response) => {
   try {
     const { amount } = req.body;
@@ -54,4 +54,5 @@ router.post('/:id/deposit', async (req: Request, res: Response) => {
     res.status(400).json({ error: error.message || 'Failed to deposit' });
   }
 });
+
 export default router;

@@ -13,6 +13,7 @@ export interface BidResult {
 }
 
 export class BidService {
+  
   async create(bidEntity: BidEntity): Promise<BidResult> {
     const { auctionId, bidderId, amount } = bidEntity;
     const auction = await Auction.findById(auctionId);
@@ -24,7 +25,7 @@ export class BidService {
       throw new Error('Auction is not accepting bids');
     }
 
-    // Validate bid amount
+    // Проверка суммы ставки
     if (amount < auction.minBid) {
       throw new Error(`Minimum bid is ${auction.minBid}`);
     }
@@ -41,7 +42,7 @@ export class BidService {
     let antiSnipingTriggered = false;
 
     if (existingBid) {
-      // Increase existing bid
+      // Увеличение существующей ставки
       if (amount <= existingBid.amount) {
         throw new Error(`New bid must be higher than current bid of ${existingBid.amount}`);
       }
@@ -57,7 +58,7 @@ export class BidService {
         increase,
       );
 
-      // Check for anti-sniping before updating bid
+      // Проверка анти-снайпинга перед обновлением ставки
       antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
         auction,
         amount
@@ -80,7 +81,7 @@ export class BidService {
         amount
       );
 
-      // Check for anti-sniping before updating bid
+      // Проверка анти-снайпинга перед сохранением ставки
       antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
         auction,
         amount
@@ -99,7 +100,7 @@ export class BidService {
       throw new Error('Bid not found');
     }
     
-    // Count bids with higher amount, or same amount but earlier timestamp
+    // Подсчёт ставок с большей суммой или с той же суммой, но более ранним временем
     const higherBids = await Bid.countDocuments({
       auctionId: new mongoose.Types.ObjectId(auctionId),
       status: BidStatus.ACTIVE,
@@ -112,16 +113,8 @@ export class BidService {
     return higherBids + 1;
   }
 
-  async getBidByBidderId(bidderId: string): Promise<IBid[]> {
-    return Bid.find({ bidderId });
-  }
-
   async getBidByAuctionId(auctionId: string): Promise<IBid[]> {
     return Bid.find({ auctionId });
-  }
-
-  async getById(id: string): Promise<IBid | null> {
-    return Bid.findById(id);
   }
 
   async getStatsByAuctionId(auctionId: string): Promise<{ totalActiveBids: number; highestBid: number }> {
@@ -152,18 +145,18 @@ export class BidService {
     const now = new Date();
     const timeUntilEnd = (auction.roundEndTime.getTime() - now.getTime()) / 1000;
     
-    // Check if we're within the anti-sniping threshold
+    // Проверка, находимся ли мы в пределах порога анти-снайпинга
     if (timeUntilEnd > auction.antiSnipingThreshold) {
       return false;
     }
     
-    // Check if max extensions reached
+    // Проверка, достигнуто ли максимальное количество продлений
     if (auction.antiSnipingCount >= auction.maxAntiSnipingExtensions) {
       return false;
     }
     
-    // Here we check if the new bid is in the top N positions
-    // Otherwise we don't need to extend the round
+    // Проверяем, входит ли новая ставка в топ N позиций
+    // Иначе продлевать раунд не нужно
     const topBids = await Bid.find({
       auctionId: auction._id,
       status: BidStatus.ACTIVE
@@ -171,13 +164,13 @@ export class BidService {
       .sort({ amount: -1, createdAt: 1 })
       .limit(auction.itemsPerRound);
     
-    // Edge case: if bidders are not enough to fill the top N positions, we need to use the minimum amount
+    // Корнер кейс: если участников недостаточно для заполнения топ N позиций, используем минимальную сумму
     const minTopAmount = topBids.length >= auction.itemsPerRound 
       ? topBids[topBids.length - 1].amount 
       : 0;
     
     if (newAmount >= minTopAmount) {
-      // Trigger anti-sniping - use atomic update
+      // Срабатывание анти-снайпинга - используем атомарное обновление
       await Auction.findByIdAndUpdate(
         auction._id,
         {

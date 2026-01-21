@@ -22,8 +22,8 @@ export class BidderService {
     return Bidder.findById(id);
   }
 
-  async charge(bidderId: string, amount: number, auctionId: string, bidId: string): Promise<IBidder> {
-    // this is already atomic operation, so we don't need to worry about concurrency
+  async charge(bidderId: string, amount: number): Promise<IBidder> {
+    // Это уже атомарная операция, поэтому не нужно беспокоиться о конкурентности
     const result = await Bidder.findOneAndUpdate(
       {
         _id: bidderId,
@@ -45,8 +45,8 @@ export class BidderService {
     return result;
   }
 
-  async refund(bidderId: string, amount: number, auctionId: string, bidId: string): Promise<IBidder> {
-    // this is already atomic operation, so we don't need to worry about concurrency
+  async refund(bidderId: string, amount: number): Promise<IBidder> {
+    // Это уже атомарная операция, поэтому не нужно беспокоиться о конкурентности
     const result = await Bidder.findOneAndUpdate(
       {
         _id: bidderId,

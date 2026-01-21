@@ -4,7 +4,7 @@ import { bidService } from '../services/bid.service';
 
 const router = Router();
 
-// Create a new auction
+// Создание нового аукциона
 router.post('/', async (req: Request, res: Response) => {
   try {
     const auction = await auctionService.create(req.body);
@@ -14,7 +14,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get all auctions
+// Получение всех аукционов
 router.get('/', async (req: Request, res: Response) => {
   try {
     const auctions = await auctionService.getAll();
@@ -24,6 +24,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// Получение аукциона по ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const auction = await auctionService.getById(req.params.id);
@@ -37,7 +38,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Start an auction
+// Запуск аукциона
 router.post('/:id/start', async (req: Request, res: Response) => {
   try {
     const auction = await auctionService.start(req.params.id);
@@ -47,12 +48,12 @@ router.post('/:id/start', async (req: Request, res: Response) => {
   }
 });
 
-// Cancel an auction
+// Отмена аукциона
 router.post('/:id/cancel', (req: Request, res: Response) => {
   res.json({ message: 'Cancel an auction' });
 });
 
-// Create a new bid
+// Создание новой ставки
 router.post('/:id/bids', async (req: Request, res: Response) => {
   try {
     const result = await bidService.create({
@@ -70,7 +71,7 @@ router.post('/:id/bids', async (req: Request, res: Response) => {
   }
 });
 
-// Get all bids for an auction
+// Получение всех ставок аукциона
 router.get('/:id/bids', async (req: Request, res: Response) => {
   try {
     const bids = await bidService.getBidByAuctionId(req.params.id);
@@ -80,6 +81,7 @@ router.get('/:id/bids', async (req: Request, res: Response) => {
   }
 });
 
+// Получение лидеров аукциона
 router.get('/:id/leaderboard', async (req: Request, res: Response) => {
   try {
     const leaderboard = await auctionService.getLeaderboard(req.params.id);
@@ -89,6 +91,7 @@ router.get('/:id/leaderboard', async (req: Request, res: Response) => {
   }
 });
 
+// Получение статистики аукциона
 router.get('/:id/stats', async (req: Request, res: Response) => {
   try {
     const stats = await bidService.getStatsByAuctionId(req.params.id);
@@ -98,7 +101,7 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
   }
 });
 
-// Get winners for an auction
+// Получение победителей аукциона
 router.get('/:id/winners', async (req: Request, res: Response) => {
   try {
     const winners = await auctionService.getWinners(req.params.id);
