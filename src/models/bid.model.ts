@@ -25,4 +25,12 @@ const BidSchema = new Schema<IBid>(
   }
 );
 
+BidSchema.index({ auctionId: 1, status: 1, amount: -1, createdAt: 1 });
+
+BidSchema.index({ auctionId: 1, bidderId: 1 }, { unique: true });
+
+BidSchema.index({ auctionId: 1, round: 1, status: 1 });
+
+BidSchema.index({ bidderId: 1 });
+
 export const Bid = mongoose.model<IBid>('Bid', BidSchema);

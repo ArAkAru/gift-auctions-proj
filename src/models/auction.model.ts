@@ -56,5 +56,9 @@ const AuctionSchema = new Schema<IAuction>(
   }
 );
 
+AuctionSchema.index({ status: 1, roundEndTime: 1 });
+
+AuctionSchema.index({ status: 1, scheduledStartTime: 1 });
+
 export const Auction = mongoose.model<IAuction>('Auction', AuctionSchema);
 
