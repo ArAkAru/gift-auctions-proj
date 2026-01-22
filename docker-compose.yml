@@ -10,10 +10,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGODB_URI=mongodb://mongo:27017/gift-auctions
+      - MONGODB_URI=mongodb://mongo:27017/gift-auctions?replicaSet=rs0
     depends_on:
-      mongo:
-        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - gift-auctions-network
@@ -24,13 +24,24 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--eval", "rs.status().ok"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
+    networks:
+      - gift-auctions-network
+
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      - mongo
+    volumes:
+      - ./scripts/mongo-init-replica.sh:/scripts/mongo-init-replica.sh:ro
+    entrypoint: ["bash", "/scripts/mongo-init-replica.sh"]
     networks:
       - gift-auctions-network
 

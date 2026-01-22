@@ -5,6 +5,7 @@ import { Auction, IAuction } from '../models/auction.model';
 import { BidStatus } from '../entities/bid';
 import { AuctionStatus } from '../models/auction.model';
 import { bidderService } from './bidder.service';
+import { lockService } from './lock.service';
 
 export interface BidResult {
   bid: IBid;
@@ -17,6 +18,7 @@ export class BidService {
   async create(bidEntity: BidEntity): Promise<BidResult> {
     const { auctionId, bidderId, amount } = bidEntity;
     
+    // Валидации без lock (быстрые проверки)
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       throw new Error('Auction not found');
@@ -30,6 +32,20 @@ export class BidService {
       throw new Error(`Minimum bid is ${auction.minBid}`);
     }
 
+    // Критическая секция под lock
+    const lockKey = `bid:${auctionId}:${bidderId}`;
+    const result = await lockService.withLock(lockKey, async () => {
+      return this.processBid(auction, bidderId, amount);
+    });
+
+    if (result === null) {
+      throw new Error('Another bid operation is in progress. Please try again.');
+    }
+
+    return result;
+  }
+
+  private async processBid(auction: IAuction, bidderId: string, amount: number): Promise<BidResult> {
     const bidderObjId = new mongoose.Types.ObjectId(bidderId);
 
     const existingBid = await Bid.findOne({
@@ -68,7 +84,7 @@ export class BidService {
     }
     
     const antiSnipingTriggered = await this.checkAndTriggerAntiSniping(auction, amount);
-    const rank = await this.calculateRank(auctionId, bid._id.toString());
+    const rank = await this.calculateRank(auction._id.toString(), bid._id.toString());
 
     return { bid, rank, antiSnipingTriggered };
   }

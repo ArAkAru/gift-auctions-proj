@@ -5,6 +5,7 @@ import { AuctionStatus } from '../models/auction.model';
 import { Bid } from '../models/bid.model';
 import { BidStatus } from '../entities/bid';
 import { bidderService } from './bidder.service';
+import { lockService } from './lock.service';
 
 export class AuctionService {
 
@@ -52,7 +53,11 @@ export class AuctionService {
       roundEndTime: { $lte: now }
     });
     for (const auction of activeAuctions) {
-      await this.endRound(auction._id.toString());
+      const auctionId = auction._id.toString();
+      await lockService.withLock(
+        `auction:endRound:${auctionId}`,
+        () => this.endRound(auctionId)
+      );
     }
   }
 
@@ -142,7 +147,11 @@ export class AuctionService {
     });
     
     for (const auction of scheduledAuctions) {
-      await this.start(auction.id);
+      const auctionId = auction._id.toString();
+      await lockService.withLock(
+        `auction:start:${auctionId}`,
+        () => this.start(auctionId)
+      );
     }
   }
 
