@@ -1,3 +1,4 @@
+import mongoose, { ClientSession } from 'mongoose';
 import { Bidder, IBidder } from '../models/bidder.model';
 
 export class BidderService {
@@ -22,8 +23,7 @@ export class BidderService {
     return Bidder.findById(id);
   }
 
-  async charge(bidderId: string, amount: number): Promise<IBidder> {
-    // Это уже атомарная операция, поэтому не нужно беспокоиться о конкурентности
+  async charge(bidderId: string, amount: number, session?: ClientSession): Promise<IBidder> {
     const result = await Bidder.findOneAndUpdate(
       {
         _id: bidderId,
@@ -32,11 +32,11 @@ export class BidderService {
       {
         $inc: { 'balance.held': -amount }
       },
-      { new: true }
+      { new: true, session }
     );
 
     if (!result) {
-      const bidder = await Bidder.findById(bidderId);
+      const bidder = await Bidder.findById(bidderId).session(session || null);
       if (!bidder) {
         throw new Error('Bidder not found');
       }
@@ -45,8 +45,7 @@ export class BidderService {
     return result;
   }
 
-  async refund(bidderId: string, amount: number): Promise<IBidder> {
-    // Это уже атомарная операция, поэтому не нужно беспокоиться о конкурентности
+  async refund(bidderId: string, amount: number, session?: ClientSession): Promise<IBidder> {
     const result = await Bidder.findOneAndUpdate(
       {
         _id: bidderId,
@@ -58,11 +57,11 @@ export class BidderService {
           'balance.available': amount
         }
       },
-      { new: true }
+      { new: true, session }
     );
 
     if (!result) {
-      const bidder = await Bidder.findById(bidderId);
+      const bidder = await Bidder.findById(bidderId).session(session || null);
       if (!bidder) {
         throw new Error('Bidder not found');
       }
@@ -71,7 +70,7 @@ export class BidderService {
     return result;
   }
 
-  async holdFunds(bidderId: string, amount: number): Promise<IBidder> {
+  async holdFunds(bidderId: string, amount: number, session?: ClientSession): Promise<IBidder> {
     const result = await Bidder.findOneAndUpdate(
       {
         _id: bidderId,
@@ -83,11 +82,11 @@ export class BidderService {
           'balance.held': amount
         }
       },
-      { new: true }
+      { new: true, session }
     );
 
     if (!result) {
-      const bidder = await Bidder.findById(bidderId);
+      const bidder = await Bidder.findById(bidderId).session(session || null);
       if (!bidder) {
         throw new Error('Bidder not found');
       }

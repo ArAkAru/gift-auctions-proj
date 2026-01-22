@@ -16,6 +16,7 @@ export class BidService {
   
   async create(bidEntity: BidEntity): Promise<BidResult> {
     const { auctionId, bidderId, amount } = bidEntity;
+    
     const auction = await Auction.findById(auctionId);
     if (!auction) {
       throw new Error('Auction not found');
@@ -25,7 +26,6 @@ export class BidService {
       throw new Error('Auction is not accepting bids');
     }
 
-    // Проверка суммы ставки
     if (amount < auction.minBid) {
       throw new Error(`Minimum bid is ${auction.minBid}`);
     }
@@ -39,10 +39,8 @@ export class BidService {
     });
 
     let bid: IBid;
-    let antiSnipingTriggered = false;
 
     if (existingBid) {
-      // Увеличение существующей ставки
       if (amount <= existingBid.amount) {
         throw new Error(`New bid must be higher than current bid of ${existingBid.amount}`);
       }
@@ -53,20 +51,10 @@ export class BidService {
         throw new Error(`Minimum bid increment is ${auction.minBidIncrement}`);
       }
 
-      await bidderService.holdFunds(
-        existingBid.bidderId,
-        increase,
-      );
-
-      // Проверка анти-снайпинга перед обновлением ставки
-      antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
-        auction,
-        amount
-      );
-
       existingBid.amount = amount;
       existingBid.round = auction.currentRound;
-      await existingBid.save();
+      
+      await this.holdFundsAndSaveBid(existingBid.bidderId, increase, existingBid);
       bid = existingBid;
     } else {
       bid = new Bid({
@@ -76,22 +64,28 @@ export class BidService {
         status: BidStatus.ACTIVE
       });
 
-      await bidderService.holdFunds(
-        bidderId,
-        amount
-      );
-
-      // Проверка анти-снайпинга перед сохранением ставки
-      antiSnipingTriggered = await this.checkAndTriggerAntiSniping(
-        auction,
-        amount
-      );
-
-      await bid.save();
+      await this.holdFundsAndSaveBid(bidderId, amount, bid);
     }
+    
+    const antiSnipingTriggered = await this.checkAndTriggerAntiSniping(auction, amount);
     const rank = await this.calculateRank(auctionId, bid._id.toString());
 
     return { bid, rank, antiSnipingTriggered };
+  }
+
+  private async holdFundsAndSaveBid(bidderId: string, amount: number, bid: IBid): Promise<void> {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      await bidderService.holdFunds(bidderId, amount, session);
+      await bid.save({ session });
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   private async calculateRank(auctionId: string, bidId: string): Promise<number> {
@@ -100,7 +94,6 @@ export class BidService {
       throw new Error('Bid not found');
     }
     
-    // Подсчёт ставок с большей суммой или с той же суммой, но более ранним временем
     const higherBids = await Bid.countDocuments({
       auctionId: new mongoose.Types.ObjectId(auctionId),
       status: BidStatus.ACTIVE,
@@ -145,18 +138,14 @@ export class BidService {
     const now = new Date();
     const timeUntilEnd = (auction.roundEndTime.getTime() - now.getTime()) / 1000;
     
-    // Проверка, находимся ли мы в пределах порога анти-снайпинга
     if (timeUntilEnd > auction.antiSnipingThreshold) {
       return false;
     }
     
-    // Проверка, достигнуто ли максимальное количество продлений
     if (auction.antiSnipingCount >= auction.maxAntiSnipingExtensions) {
       return false;
     }
     
-    // Проверяем, входит ли новая ставка в топ N позиций
-    // Иначе продлевать раунд не нужно
     const topBids = await Bid.find({
       auctionId: auction._id,
       status: BidStatus.ACTIVE
@@ -164,13 +153,11 @@ export class BidService {
       .sort({ amount: -1, createdAt: 1 })
       .limit(auction.itemsPerRound);
     
-    // Корнер кейс: если участников недостаточно для заполнения топ N позиций, используем минимальную сумму
     const minTopAmount = topBids.length >= auction.itemsPerRound 
       ? topBids[topBids.length - 1].amount 
       : 0;
     
     if (newAmount >= minTopAmount) {
-      // Срабатывание анти-снайпинга - используем атомарное обновление
       await Auction.findByIdAndUpdate(
         auction._id,
         {

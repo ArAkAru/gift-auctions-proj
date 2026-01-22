@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Auction, IAuction } from '../models/auction.model';
 import { CreateAuctionParams } from '../entities';
 import { AuctionStatus } from '../models/auction.model';
@@ -56,69 +57,80 @@ export class AuctionService {
   }
 
   async endRound(auctionId: string): Promise<{ winners: string[], nextRound: boolean }> {
-    const auction = await Auction.findById(auctionId);
-    if (!auction) {
-      throw new Error('Auction not found');
-    }
+    const session = await mongoose.startSession();
+    
+    try {
+      session.startTransaction();
 
-    if (auction.status !== AuctionStatus.ACTIVE) {
-      throw new Error('Auction is not active');
-    }
-    const currentRound = auction?.currentRound;
-    const winners: string[] = [];
-    const topBids = await Bid.find({
-      auctionId: auction._id,
-      status: BidStatus.ACTIVE
-    })
-      .sort({ amount: -1, createdAt: 1 })
-      .limit(auction.itemsPerRound);
+      const auction = await Auction.findById(auctionId).session(session);
+      if (!auction) {
+        throw new Error('Auction not found');
+      }
 
-    for (const bid of topBids) {
-      bid.status = BidStatus.WON;
-      bid.wonInRound = auction.currentRound;
-      await bid.save();
-      await bidderService.charge(
-        bid.bidderId, 
-        bid.amount,
-      );
-      winners.push(bid.bidderId);
-    }
-    auction.itemsDistributed += topBids.length;
-
-    // Проверка, нужно ли продолжать следующий раунд
-    const hasMoreRounds = currentRound < auction.totalRounds;
-    const hasMoreItems = auction.itemsDistributed < auction.totalItems;
-    const activeBidsCount = await Bid.countDocuments({
-      auctionId: auction._id,
-      status: BidStatus.ACTIVE
-    });
-  
-    if (hasMoreRounds && hasMoreItems && activeBidsCount > 0) {
-      const now = new Date();
-      const roundDuration = auction.regularRoundDuration;
-      auction.currentRound = currentRound + 1;
-      auction.roundEndTime = new Date(now.getTime() + roundDuration * 1000);
-      auction.antiSnipingCount = 0;
-      await auction.save();
-      return { winners, nextRound: true };
-    } else {
-      auction.status = AuctionStatus.COMPLETED;
-      await auction.save();
-
-      const remainingBids = await Bid.find({
+      if (auction.status !== AuctionStatus.ACTIVE) {
+        throw new Error('Auction is not active');
+      }
+      
+      const currentRound = auction.currentRound;
+      const winners: string[] = [];
+      const topBids = await Bid.find({
         auctionId: auction._id,
         status: BidStatus.ACTIVE
-      });
+      })
+        .sort({ amount: -1, createdAt: 1 })
+        .limit(auction.itemsPerRound)
+        .session(session);
 
-      for (const bid of remainingBids) {
-        bid.status = BidStatus.LOST;
-        await bid.save();
-        await bidderService.refund(
-          bid.bidderId, 
-          bid.amount,
-        );
+      for (const bid of topBids) {
+        bid.status = BidStatus.WON;
+        bid.wonInRound = auction.currentRound;
+        await bid.save({ session });
+        await bidderService.charge(bid.bidderId, bid.amount, session);
+        winners.push(bid.bidderId);
       }
-      return { winners, nextRound: false };
+      auction.itemsDistributed += topBids.length;
+
+      const hasMoreRounds = currentRound < auction.totalRounds;
+      const hasMoreItems = auction.itemsDistributed < auction.totalItems;
+      const activeBidsCount = await Bid.countDocuments({
+        auctionId: auction._id,
+        status: BidStatus.ACTIVE
+      }).session(session);
+    
+      let nextRound: boolean;
+      
+      if (hasMoreRounds && hasMoreItems && activeBidsCount > 0) {
+        const now = new Date();
+        const roundDuration = auction.regularRoundDuration;
+        auction.currentRound = currentRound + 1;
+        auction.roundEndTime = new Date(now.getTime() + roundDuration * 1000);
+        auction.antiSnipingCount = 0;
+        await auction.save({ session });
+        nextRound = true;
+      } else {
+        auction.status = AuctionStatus.COMPLETED;
+        await auction.save({ session });
+
+        const remainingBids = await Bid.find({
+          auctionId: auction._id,
+          status: BidStatus.ACTIVE
+        }).session(session);
+
+        for (const bid of remainingBids) {
+          bid.status = BidStatus.LOST;
+          await bid.save({ session });
+          await bidderService.refund(bid.bidderId, bid.amount, session);
+        }
+        nextRound = false;
+      }
+
+      await session.commitTransaction();
+      return { winners, nextRound };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
   }
 
