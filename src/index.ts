@@ -11,14 +11,10 @@ const app: Express = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Gift Auctions API is running' });
-});
+app.use(express.static('public'));
 
 app.use('/auctions', auctionsRouter);
 app.use('/bidders', biddersRouter);
-app.use(express.static('public'));
 
 const startServer = async () => {
   try {
