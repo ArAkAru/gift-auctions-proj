@@ -223,3 +223,6 @@ npm run stress     # Стресс-тест
 - [ ] Логи, метрики и тп - все что связано с реальным проектом на проде
 - [ ] Перенести distributed locks на Redis (Redlock) — быстрее и надёжнее чем MongoDB для этой задачи
 - [ ] Создать отдельную таблицу Transactions - чтобы хранить всю историю операций для пользователя
+
+## Demo версия
+- https://drive.google.com/file/d/1_uX1iMYuh_VwDT6VI82_r1BA24hWb-XF/view?usp=drive_link
