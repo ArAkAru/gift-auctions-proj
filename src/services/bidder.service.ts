@@ -23,6 +23,11 @@ export class BidderService {
     return Bidder.findById(id);
   }
 
+  async getByIds(ids: string[]): Promise<IBidder[]> {
+    if (ids.length === 0) return [];
+    return Bidder.find({ _id: { $in: ids } });
+  }
+
   async charge(bidderId: string, amount: number, session?: ClientSession): Promise<IBidder> {
     const result = await Bidder.findOneAndUpdate(
       {

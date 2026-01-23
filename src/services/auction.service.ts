@@ -224,19 +224,18 @@ export class AuctionService {
     })
       .sort({ amount: -1, createdAt: 1 });
     
-    const leaderboard = [];
-    for (let i = 0; i < bids.length; i++) {
-      const bid = bids[i];
-      const bidder = await bidderService.getById(bid.bidderId);
-      leaderboard.push({
-        bidderId: bid.bidderId,
-        username: bidder?.username || 'Unknown',
-        amount: bid.amount,
-        rank: i + 1,
-        isWinningPosition: i < auction.itemsPerRound
-      });
-    }
-    return leaderboard;
+    // Получаем всех bidders одним запросом (вместо N+1)
+    const bidderIds = bids.map(b => b.bidderId);
+    const bidders = await bidderService.getByIds(bidderIds);
+    const bidderMap = new Map(bidders.map(b => [b._id.toString(), b]));
+    
+    return bids.map((bid, i) => ({
+      bidderId: bid.bidderId,
+      username: bidderMap.get(bid.bidderId)?.username || 'Unknown',
+      amount: bid.amount,
+      rank: i + 1,
+      isWinningPosition: i < auction.itemsPerRound
+    }));
   }
 
   async getWinners(auctionId: string): Promise<Array<{ bidderId: string; username: string; amount: number; round: number; itemNumber: number }>> {
@@ -246,19 +245,18 @@ export class AuctionService {
     })
       .sort({ wonInRound: 1, amount: -1 });
     
-    const winners = [];
-    let itemNumber = 1;
-    for (const bid of winningBids) {
-      const bidder = await bidderService.getById(bid.bidderId);
-      winners.push({
-        bidderId: bid.bidderId,
-        username: bidder?.username || 'Unknown',
-        amount: bid.amount,
-        round: bid.wonInRound || 0,
-        itemNumber: itemNumber++
-      });
-    }
-    return winners;
+    // Получаем всех bidders одним запросом (вместо N+1)
+    const bidderIds = winningBids.map(b => b.bidderId);
+    const bidders = await bidderService.getByIds(bidderIds);
+    const bidderMap = new Map(bidders.map(b => [b._id.toString(), b]));
+    
+    return winningBids.map((bid, i) => ({
+      bidderId: bid.bidderId,
+      username: bidderMap.get(bid.bidderId)?.username || 'Unknown',
+      amount: bid.amount,
+      round: bid.wonInRound || 0,
+      itemNumber: i + 1
+    }));
   }
 
   getAuctionWithTimeRemaining(auction: IAuction): IAuction & { timeRemaining: number | null } {
