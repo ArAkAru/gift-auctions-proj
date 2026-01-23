@@ -873,7 +873,7 @@
         const res = await fetch(`/auctions/${currentAuction._id}`);
         const auction = await res.json();
         
-        if (auction.status !== currentAuction.status) {
+        if (auction.status !== currentAuction.status || auction.currentRound !== currentAuction.currentRound) {
           currentAuction = auction;
           renderAuction();
           loadAuctions();
@@ -898,6 +898,7 @@
       
       await loadStats();
       await loadLeaderboard();
+      await loadWinners();
     }
 
     async function renderAuction() {
