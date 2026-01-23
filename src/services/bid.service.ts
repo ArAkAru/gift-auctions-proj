@@ -48,15 +48,21 @@ export class BidService {
   private async processBid(auction: IAuction, bidderId: string, amount: number): Promise<BidResult> {
     const bidderObjId = new mongoose.Types.ObjectId(bidderId);
 
+    // Ищем любую ставку пользователя на аукционе (без фильтра по статусу)
+    // т.к. уникальный индекс: один bidder = одна запись на auction
     const existingBid = await Bid.findOne({
       auctionId: auction._id,
-      bidderId: bidderObjId,
-      status: BidStatus.ACTIVE
+      bidderId: bidderObjId
     });
 
     let bid: IBid;
 
     if (existingBid) {
+      // Победитель НЕ может участвовать в следующих раундах — уже получил товар!
+      if (existingBid.status === BidStatus.WON) {
+        throw new Error('You have already won in this auction and cannot place more bids');
+      }
+      
       if (amount <= existingBid.amount) {
         throw new Error(`New bid must be higher than current bid of ${existingBid.amount}`);
       }
