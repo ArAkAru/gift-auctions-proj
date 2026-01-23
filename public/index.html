@@ -257,6 +257,20 @@
       color: var(--text-secondary);
     }
 
+    .auction-status.scheduled {
+      background: rgba(255, 215, 0, 0.1);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+
+    .scheduled-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 1rem;
+      color: var(--accent-gold);
+    }
+
     .auction-status::before {
       content: '';
       width: 8px;
@@ -633,6 +647,11 @@
                 <input type="number" id="regularRoundDuration" value="60">
               </div>
             </div>
+            <div>
+              <label>Schedule Start (optional)</label>
+              <input type="datetime-local" id="scheduledStartTime">
+              <small style="color: var(--text-secondary); font-size: 0.75rem;">Leave empty to start manually</small>
+            </div>
             <button onclick="createAuction()">Create Auction</button>
             <button class="secondary" onclick="hideCreateAuction()">Cancel</button>
           </div>
@@ -813,6 +832,8 @@
     }
 
     async function createAuction() {
+      const scheduledValue = document.getElementById('scheduledStartTime').value;
+      
       const data = {
         name: document.getElementById('auctionName').value,
         totalItems: parseInt(document.getElementById('totalItems').value),
@@ -822,6 +843,10 @@
         firstRoundDuration: parseInt(document.getElementById('firstRoundDuration').value),
         regularRoundDuration: parseInt(document.getElementById('regularRoundDuration').value)
       };
+      
+      if (scheduledValue) {
+        data.scheduledStartTime = new Date(scheduledValue).toISOString();
+      }
 
       if (!data.name) {
         showMessage('Auction name is required', 'error');
@@ -838,8 +863,10 @@
         if (!res.ok) throw new Error((await res.json()).error);
         
         const auction = await res.json();
-        showMessage('Auction created!');
+        const statusMsg = auction.status === 'SCHEDULED' ? 'Auction scheduled!' : 'Auction created!';
+        showMessage(statusMsg);
         hideCreateAuction();
+        document.getElementById('scheduledStartTime').value = '';
         await loadAuctions();
         selectAuction(auction._id);
       } catch (e) {
@@ -858,7 +885,7 @@
         renderAuction();
         loadAuctions();
         
-        if (currentAuction.status === 'ACTIVE') {
+        if (currentAuction.status === 'ACTIVE' || currentAuction.status === 'SCHEDULED') {
           refreshInterval = setInterval(() => refreshAuction(), 1000);
         }
       } catch (e) {
@@ -913,6 +940,11 @@
           <button onclick="startAuction()">Start Auction</button>
           <button class="danger" onclick="cancelAuction()">Cancel</button>
         `;
+      } else if (a.status === 'SCHEDULED') {
+        controlsHtml = `
+          <button onclick="startAuction()">Start Now</button>
+          <button class="danger" onclick="cancelAuction()">Cancel</button>
+        `;
       } else if (a.status === 'ACTIVE') {
         controlsHtml = `
           <button class="danger" onclick="cancelAuction()">Cancel Auction</button>
@@ -938,6 +970,12 @@
           
           ${a.status === 'ACTIVE' ? `
             <div class="timer-display" id="auctionTimer">--:--</div>
+          ` : ''}
+          
+          ${a.status === 'SCHEDULED' && a.scheduledStartTime ? `
+            <div class="scheduled-time">
+              🕐 Starts at: ${new Date(a.scheduledStartTime).toLocaleString()}
+            </div>
           ` : ''}
           
           <div class="round-info" id="auctionStats">
