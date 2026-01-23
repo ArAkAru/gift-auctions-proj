@@ -49,8 +49,16 @@ router.post('/:id/start', async (req: Request, res: Response) => {
 });
 
 // Отмена аукциона
-router.post('/:id/cancel', (req: Request, res: Response) => {
-  res.json({ message: 'Cancel an auction' });
+router.post('/:id/cancel', async (req: Request, res: Response) => {
+  try {
+    const result = await auctionService.cancel(req.params.id);
+    res.json({ 
+      message: 'Auction cancelled successfully',
+      refundedBids: result.refundedBids
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Failed to cancel auction' });
+  }
 });
 
 // Создание новой ставки

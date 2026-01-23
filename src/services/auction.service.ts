@@ -46,6 +46,64 @@ export class AuctionService {
     return auction;
   }
 
+  async cancel(auctionId: string): Promise<{ refundedBids: number }> {
+    const result = await lockService.withLock(
+      `auction:cancel:${auctionId}`,
+      () => this.processCancellation(auctionId)
+    );
+
+    if (result === null) {
+      throw new Error('Another cancellation is in progress. Please try again.');
+    }
+
+    return result;
+  }
+
+  private async processCancellation(auctionId: string): Promise<{ refundedBids: number }> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      const auction = await Auction.findById(auctionId).session(session);
+      if (!auction) {
+        throw new Error('Auction not found');
+      }
+
+      if (auction.status === AuctionStatus.COMPLETED) {
+        throw new Error('Cannot cancel completed auction');
+      }
+
+      if (auction.status === AuctionStatus.CANCELLED) {
+        throw new Error('Auction is already cancelled');
+      }
+
+      const activeBids = await Bid.find({
+        auctionId: auction._id,
+        status: BidStatus.ACTIVE
+      }).session(session);
+
+      for (const bid of activeBids) {
+        bid.status = BidStatus.LOST;
+        await bid.save({ session });
+        await bidderService.refund(bid.bidderId, bid.amount, session);
+      }
+
+      auction.status = AuctionStatus.CANCELLED;
+      auction.roundEndTime = undefined;
+      await auction.save({ session });
+
+      await session.commitTransaction();
+
+      return { refundedBids: activeBids.length };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
   async processEndingRounds(): Promise<void> {
     const now = new Date();
     const activeAuctions = await Auction.find({
