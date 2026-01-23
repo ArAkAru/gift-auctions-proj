@@ -144,12 +144,20 @@ export class AuctionService {
         .limit(auction.itemsPerRound)
         .session(session);
 
-      for (const bid of topBids) {
-        bid.status = BidStatus.WON;
-        bid.wonInRound = auction.currentRound;
-        await bid.save({ session });
-        await bidderService.charge(bid.bidderId, bid.amount, session);
-        winners.push(bid.bidderId);
+      // Bulk update победителей (вместо цикла с save)
+      if (topBids.length > 0) {
+        const bidIds = topBids.map(b => b._id);
+        await Bid.updateMany(
+          { _id: { $in: bidIds } },
+          { $set: { status: BidStatus.WON, wonInRound: auction.currentRound } },
+          { session }
+        );
+        
+        // Bulk charge победителей
+        for (const bid of topBids) {
+          await bidderService.charge(bid.bidderId, bid.amount, session);
+          winners.push(bid.bidderId);
+        }
       }
       auction.itemsDistributed += topBids.length;
 
@@ -179,10 +187,19 @@ export class AuctionService {
           status: BidStatus.ACTIVE
         }).session(session);
 
-        for (const bid of remainingBids) {
-          bid.status = BidStatus.LOST;
-          await bid.save({ session });
-          await bidderService.refund(bid.bidderId, bid.amount, session);
+        // Bulk update проигравших
+        if (remainingBids.length > 0) {
+          const lostBidIds = remainingBids.map(b => b._id);
+          await Bid.updateMany(
+            { _id: { $in: lostBidIds } },
+            { $set: { status: BidStatus.LOST } },
+            { session }
+          );
+          
+          // Refund каждому (нужны индивидуальные суммы)
+          for (const bid of remainingBids) {
+            await bidderService.refund(bid.bidderId, bid.amount, session);
+          }
         }
         nextRound = false;
       }
